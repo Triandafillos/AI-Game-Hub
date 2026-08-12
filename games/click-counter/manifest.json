@@ -1,0 +1,9 @@
+{
+  "slug": "click-counter",
+  "name": "Click Counter",
+  "description": "A minimal reference game that saves your click count.",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "saveSchemaVersion": 1,
+  "maxSaveBytes": 262144
+}

@@ -1,0 +1,13 @@
+---
+description: Docker and infrastructure conventions
+globs: "{docker-compose*,infra/**,**/Dockerfile*}"
+alwaysApply: false
+---
+
+# Docker / infra
+
+- Compose services: app (Next.js), postgres, proxy (Caddy). Postgres on internal network only.
+- Persist postgres data and game files via named volumes; do not bake game assets into app image.
+- Env vars via .env (gitignored); provide .env.example with keys only, no real values.
+- Do not open Postgres port publicly. Assume Cloudflare proxy in front of VPS.
+- Backup strategy: pg_dump cron — do not assume managed DB backups.

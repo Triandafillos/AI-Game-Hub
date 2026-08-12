@@ -1,0 +1,13 @@
+---
+description: Next.js platform app conventions
+globs: apps/platform/**
+alwaysApply: false
+---
+
+# Platform app (apps/platform)
+
+- Use App Router, TypeScript, @supabase/ssr for auth sessions.
+- Save/load: API routes verify Supabase JWT server-side, then read/write local Postgres (Drizzle).
+- Do not expose Postgres to the client. Do not use Supabase client for saves table from the browser.
+- /play/[slug] loads iframe + postMessage bridge; validate postMessage origin both ways.
+- Keep pages server-first; client components only where needed (iframe bridge, interactive UI).

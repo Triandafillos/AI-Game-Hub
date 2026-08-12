@@ -1,0 +1,13 @@
+---
+description: Game portal architecture constraints
+alwaysApply: true
+---
+
+# Architecture
+
+- Monorepo layout: apps/platform (Next.js), packages/game-sdk, games/* (independent bundles).
+- Games run in sandboxed iframes; integrate only via game-sdk postMessage (save, load, getUser).
+- Auth: Supabase Auth (cloud). Data: Postgres in Docker on VPS — not Supabase hosted DB, not Azure SQL.
+- Saves: one JSON slot per (user_id, game_id); user_id is Supabase JWT sub; enforce in API routes.
+- Game assets: static files on VPS volume under /games/{slug}/{version}/; versioned paths, never overwrite in place.
+- Hosting target: Docker on VPS behind Cloudflare; do not assume Vercel or Supabase Storage.

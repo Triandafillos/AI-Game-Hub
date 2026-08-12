@@ -1,0 +1,13 @@
+---
+description: Game SDK and game project conventions
+globs: "{packages/game-sdk/**,games/**}"
+alwaysApply: false
+---
+
+# Game SDK and games
+
+- SDK exposes: getUser(), save(data), load(), optional onPause() for autosave.
+- Games must not import platform internals or connect to Postgres/Supabase directly.
+- Games are static bundles (index.html + assets); keep build output self-contained.
+- New games: manifest.json with id, slug, version, entry, saveSchemaVersion, maxSaveBytes.
+- Do not break SDK API without versioning; document breaking changes in package changelog.

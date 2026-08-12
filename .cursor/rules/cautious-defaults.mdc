@@ -1,0 +1,13 @@
+---
+description: Cautious agent behavior for this repo
+alwaysApply: true
+---
+
+# Cautious defaults
+
+- Plan before large changes; confirm approach when touching auth, saves, or Docker/infra.
+- One concern per PR-sized change set — avoid bundling unrelated work.
+- Do not add npm/pnpm packages without stating why and checking for lighter alternatives.
+- Do not change docker-compose, Cloudflare assumptions, or Supabase Auth flow without calling it out.
+- Run linters on edited files; do not drive-by fix unrelated lint issues.
+- Prefer API routes for save/load; games must not get DB credentials or service role keys.

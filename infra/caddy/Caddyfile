@@ -1,0 +1,12 @@
+:80 {
+  encode gzip zstd
+
+  handle_path /games/* {
+    root * /srv/games
+    file_server
+  }
+
+  handle {
+    reverse_proxy app:3000
+  }
+}

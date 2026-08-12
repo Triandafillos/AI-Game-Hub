@@ -1,0 +1,19 @@
+{
+  "name": "ai-game-hub",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@ai-game-hub/platform",
+    "build": "npm run build --workspace=@ai-game-hub/platform",
+    "start": "npm run start --workspace=@ai-game-hub/platform",
+    "lint": "npm run lint --workspace=@ai-game-hub/platform",
+    "db:generate": "npm run db:generate --workspace=@ai-game-hub/platform",
+    "db:migrate": "npm run db:migrate --workspace=@ai-game-hub/platform"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
