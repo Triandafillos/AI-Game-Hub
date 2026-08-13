@@ -1,0 +1,9 @@
+{
+  "slug": "arena-blaster",
+  "name": "Arena Blaster",
+  "description": "Single-screen arena. Phase 1: walk the map. Combat coming later.",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "saveSchemaVersion": 1,
+  "maxSaveBytes": 262144
+}

@@ -21,4 +21,4 @@ const saved = await platform.load();
 await platform.save({ score: 100 });
 ```
 
-See `games/click-counter/` for a minimal reference implementation.
+See `games/click-counter/` and `games/reaction-timer/` for minimal reference implementations.

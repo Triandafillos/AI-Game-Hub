@@ -1,0 +1,9 @@
+{
+  "slug": "reaction-timer",
+  "name": "Reaction Timer",
+  "description": "Wait for green, then click as fast as you can. Your best time is saved.",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "saveSchemaVersion": 1,
+  "maxSaveBytes": 262144
+}

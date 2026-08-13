@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reaction Timer</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, sans-serif;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: #0a0a0a;
+        color: #f4f4f5;
+      }
+      .card {
+        width: min(420px, 92vw);
+        text-align: center;
+        padding: 1.5rem;
+      }
+      .pad {
+        margin-top: 1rem;
+        padding: 3rem 1rem;
+        border-radius: 1rem;
+        border: 2px solid #3f3f46;
+        background: #18181b;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+      .pad.waiting {
+        background: #7f1d1d;
+        border-color: #ef4444;
+      }
+      .pad.ready {
+        background: #14532d;
+        border-color: #22c55e;
+      }
+      .pad.too-soon {
+        background: #713f12;
+        border-color: #f59e0b;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+      .stat {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        background: #18181b;
+        border: 1px solid #27272a;
+      }
+      .stat-label {
+        font-size: 0.75rem;
+        color: #a1a1aa;
+      }
+      .stat-value {
+        margin-top: 0.25rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+      .status {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: #a1a1aa;
+        min-height: 1.25rem;
+      }
+      button.reset {
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #3f3f46;
+        border-radius: 0.5rem;
+        background: transparent;
+        color: #d4d4d8;
+        cursor: pointer;
+      }
+      button.reset:hover {
+        background: #27272a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Reaction Timer</h1>
+      <p id="prompt">Click the pad to start.</p>
+
+      <div id="pad" class="pad" role="button" tabindex="0" aria-label="Reaction pad">
+        Tap when green
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Best</div>
+          <div id="best" class="stat-value">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Last</div>
+          <div id="last" class="stat-value">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Attempts</div>
+          <div id="attempts" class="stat-value">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Too early</div>
+          <div id="false-starts" class="stat-value">0</div>
+        </div>
+      </div>
+
+      <p id="status" class="status">Loading save...</p>
+      <button id="reset-btn" class="reset" type="button">Reset stats</button>
+    </div>
+
+    <script>
+      const pad = document.getElementById("pad");
+      const promptEl = document.getElementById("prompt");
+      const bestEl = document.getElementById("best");
+      const lastEl = document.getElementById("last");
+      const attemptsEl = document.getElementById("attempts");
+      const falseStartsEl = document.getElementById("false-starts");
+      const statusEl = document.getElementById("status");
+      const resetBtn = document.getElementById("reset-btn");
+
+      const state = {
+        bestMs: null,
+        lastMs: null,
+        attempts: 0,
+        falseStarts: 0,
+      };
+
+      let phase = "idle";
+      let waitTimeout = null;
+      let greenAt = 0;
+
+      function createRequestId() {
+        return Date.now() + "-" + Math.random().toString(36).slice(2, 9);
+      }
+
+      function sendRequest(message) {
+        return new Promise((resolve, reject) => {
+          const requestId = message.requestId || createRequestId();
+          message.requestId = requestId;
+
+          const timer = setTimeout(() => {
+            window.removeEventListener("message", onMessage);
+            reject(new Error("Platform request timed out"));
+          }, 10000);
+
+          function onMessage(event) {
+            if (event.origin !== window.location.origin) return;
+            const data = event.data;
+            if (!data || data.requestId !== requestId) return;
+
+            if (
+              data.type === "platform:user" ||
+              data.type === "platform:loadResult" ||
+              data.type === "platform:saveResult"
+            ) {
+              clearTimeout(timer);
+              window.removeEventListener("message", onMessage);
+              resolve(data);
+            }
+          }
+
+          window.addEventListener("message", onMessage);
+          window.parent.postMessage(message, window.location.origin);
+        });
+      }
+
+      function formatMs(ms) {
+        return ms + " ms";
+      }
+
+      function render() {
+        bestEl.textContent = state.bestMs == null ? "—" : formatMs(state.bestMs);
+        lastEl.textContent = state.lastMs == null ? "—" : formatMs(state.lastMs);
+        attemptsEl.textContent = String(state.attempts);
+        falseStartsEl.textContent = String(state.falseStarts);
+      }
+
+      function setPadClass(className) {
+        pad.className = "pad" + (className ? " " + className : "");
+      }
+
+      function clearWait() {
+        if (waitTimeout) {
+          clearTimeout(waitTimeout);
+          waitTimeout = null;
+        }
+      }
+
+      async function saveProgress() {
+        statusEl.textContent = "Saving...";
+        try {
+          const result = await sendRequest({
+            type: "platform:save",
+            data: {
+              bestMs: state.bestMs,
+              lastMs: state.lastMs,
+              attempts: state.attempts,
+              falseStarts: state.falseStarts,
+            },
+          });
+          if (result.type === "platform:saveResult" && result.ok) {
+            statusEl.textContent = "Saved";
+          } else {
+            statusEl.textContent = result.error || "Save failed (log in to save)";
+          }
+        } catch {
+          statusEl.textContent = "Save failed";
+        }
+      }
+
+      async function loadProgress() {
+        try {
+          const result = await sendRequest({ type: "platform:load" });
+          if (result.type === "platform:loadResult" && result.data) {
+            const data = result.data;
+            if (typeof data.bestMs === "number" || data.bestMs === null) state.bestMs = data.bestMs;
+            if (typeof data.lastMs === "number" || data.lastMs === null) state.lastMs = data.lastMs;
+            if (typeof data.attempts === "number") state.attempts = data.attempts;
+            if (typeof data.falseStarts === "number") state.falseStarts = data.falseStarts;
+          }
+          render();
+          statusEl.textContent = "Ready";
+        } catch {
+          render();
+          statusEl.textContent = "Ready (no save loaded)";
+        }
+      }
+
+      function startRound() {
+        clearWait();
+        phase = "waiting";
+        setPadClass("waiting");
+        promptEl.textContent = "Wait for green...";
+        pad.textContent = "Wait...";
+
+        const delay = 1500 + Math.random() * 2500;
+        waitTimeout = setTimeout(() => {
+          phase = "ready";
+          greenAt = performance.now();
+          setPadClass("ready");
+          promptEl.textContent = "Click now!";
+          pad.textContent = "GO!";
+        }, delay);
+      }
+
+      async function handlePadClick() {
+        if (phase === "idle" || phase === "result") {
+          startRound();
+          return;
+        }
+
+        if (phase === "waiting") {
+          clearWait();
+          phase = "result";
+          state.falseStarts += 1;
+          setPadClass("too-soon");
+          promptEl.textContent = "Too soon! Click to try again.";
+          pad.textContent = "Too early";
+          render();
+          await saveProgress();
+          return;
+        }
+
+        if (phase === "ready") {
+          const reactionMs = Math.round(performance.now() - greenAt);
+          phase = "result";
+          state.attempts += 1;
+          state.lastMs = reactionMs;
+          if (state.bestMs == null || reactionMs < state.bestMs) {
+            state.bestMs = reactionMs;
+          }
+          setPadClass("");
+          promptEl.textContent = "Nice! Click to play again.";
+          pad.textContent = formatMs(reactionMs);
+          render();
+          await saveProgress();
+        }
+      }
+
+      pad.addEventListener("click", handlePadClick);
+      pad.addEventListener("keydown", (event) => {
+        if (event.key === " " || event.key === "Enter") {
+          event.preventDefault();
+          handlePadClick();
+        }
+      });
+
+      resetBtn.addEventListener("click", async () => {
+        state.bestMs = null;
+        state.lastMs = null;
+        state.attempts = 0;
+        state.falseStarts = 0;
+        phase = "idle";
+        clearWait();
+        setPadClass("");
+        promptEl.textContent = "Click the pad to start.";
+        pad.textContent = "Tap when green";
+        render();
+        await saveProgress();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          saveProgress();
+        }
+      });
+
+      loadProgress();
+    </script>
+  </body>
+</html>

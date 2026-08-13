@@ -34,3 +34,25 @@ VALUES (
   true
 )
 ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO games (slug, name, description, version, entry_path, is_published)
+VALUES (
+  'reaction-timer',
+  'Reaction Timer',
+  'Wait for green, then click as fast as you can. Your best time is saved.',
+  '1.0.0',
+  '/games/reaction-timer/1.0.0/index.html',
+  true
+)
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO games (slug, name, description, version, entry_path, is_published)
+VALUES (
+  'arena-blaster',
+  'Arena Blaster',
+  'Single-screen arena. Phase 1: walk the map. Combat coming later.',
+  '1.0.0',
+  '/games/arena-blaster/1.0.0/index.html',
+  true
+)
+ON CONFLICT (slug) DO NOTHING;
