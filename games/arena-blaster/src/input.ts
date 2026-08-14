@@ -4,9 +4,12 @@ const state: InputState = {
   left: false,
   right: false,
   jump: false,
+  fire: false,
+  pause: false,
+  restart: false,
 };
 
-function isMoveCode(code: string) {
+function isGameCode(code: string) {
   return (
     code === "ArrowLeft" ||
     code === "ArrowRight" ||
@@ -14,7 +17,9 @@ function isMoveCode(code: string) {
     code === "KeyA" ||
     code === "KeyD" ||
     code === "KeyW" ||
-    code === "Space"
+    code === "Space" ||
+    code === "KeyP" ||
+    code === "KeyR"
   );
 }
 
@@ -25,14 +30,23 @@ function setKey(code: string, pressed: boolean) {
   if (code === "ArrowRight" || code === "KeyD") {
     state.right = pressed;
   }
-  if (code === "ArrowUp" || code === "KeyW" || code === "Space") {
+  if (code === "ArrowUp" || code === "KeyW") {
     state.jump = pressed;
+  }
+  if (code === "Space") {
+    state.fire = pressed;
+  }
+  if (code === "KeyP") {
+    state.pause = pressed;
+  }
+  if (code === "KeyR") {
+    state.restart = pressed;
   }
 }
 
 export function bindInput() {
   window.addEventListener("keydown", (event) => {
-    if (isMoveCode(event.code)) {
+    if (isGameCode(event.code)) {
       event.preventDefault();
     }
     setKey(event.code, true);
@@ -46,6 +60,9 @@ export function bindInput() {
     state.left = false;
     state.right = false;
     state.jump = false;
+    state.fire = false;
+    state.pause = false;
+    state.restart = false;
   });
 }
 

@@ -1,10 +1,7 @@
-import type { InputState, Player, Rect, World } from "./types";
+import type { InputState, Player, World } from "./types";
+import { overlapsX } from "./collision";
 
 const MAX_FALL_SPEED = 900;
-
-function overlapsX(a: Rect, b: Rect) {
-  return a.x < b.x + b.w && a.x + a.w > b.x;
-}
 
 export function createPlayer(world: World): Player {
   const w = 36;
@@ -21,7 +18,18 @@ export function createPlayer(world: World): Player {
     gravity: 1600,
     onGround: true,
     facing: 1,
+    invuln: 0,
   };
+}
+
+export function resetPlayer(player: Player, world: World) {
+  player.x = world.width / 2 - player.w / 2;
+  player.y = world.groundY - player.h;
+  player.vx = 0;
+  player.vy = 0;
+  player.onGround = true;
+  player.facing = 1;
+  player.invuln = 1.5;
 }
 
 export function updatePlayer(
@@ -30,14 +38,17 @@ export function updatePlayer(
   input: InputState,
   dt: number,
 ) {
-  let move = 0;
-  if (input.left) move -= 1;
-  if (input.right) move += 1;
-
-  player.vx = move * player.speed;
-  if (move !== 0) {
-    player.facing = move > 0 ? 1 : -1;
+  if (player.invuln > 0) {
+    player.invuln = Math.max(0, player.invuln - dt);
   }
+
+  if (input.left && !input.right) {
+    player.facing = -1;
+  } else if (input.right && !input.left) {
+    player.facing = 1;
+  }
+
+  player.vx = player.facing * player.speed;
 
   if (input.jump && player.onGround) {
     player.vy = -player.jumpSpeed;
@@ -47,20 +58,27 @@ export function updatePlayer(
   player.vy = Math.min(MAX_FALL_SPEED, player.vy + player.gravity * dt);
 
   player.x += player.vx * dt;
-  player.x = Math.max(0, Math.min(world.width - player.w, player.x));
+
+  if (player.x <= 0) {
+    player.x = 0;
+    player.facing = 1;
+    player.vx = player.speed;
+  } else if (player.x + player.w >= world.width) {
+    player.x = world.width - player.w;
+    player.facing = -1;
+    player.vx = -player.speed;
+  }
 
   const prevBottom = player.y + player.h;
   player.y += player.vy * dt;
   player.onGround = false;
 
-  // Ground
   if (player.y + player.h >= world.groundY) {
     player.y = world.groundY - player.h;
     player.vy = 0;
     player.onGround = true;
   }
 
-  // Solid platforms: land when falling onto the top surface
   if (player.vy >= 0) {
     for (const platform of world.platforms) {
       const feet = player.y + player.h;
@@ -80,7 +98,6 @@ export function updatePlayer(
     }
   }
 
-  // Keep inside the screen vertically
   if (player.y < 0) {
     player.y = 0;
     if (player.vy < 0) player.vy = 0;
